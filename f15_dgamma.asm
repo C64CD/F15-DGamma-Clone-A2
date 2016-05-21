@@ -1,3 +1,4 @@
+; @com.wudsn.ide.asm.hardware=APPLE2
 ;
 ; F15 D'GAMMA CLONE
 ;
@@ -34,6 +35,10 @@ char_data	!binary "binary/c64cd_screen.raw"
 
 ; Constants
 rd_vbl_bar	= $c019		; top bit clear means vblank
+ptrig		= $c070		; clears vbl on the //c
+setioudis	= $c07e
+clrioudis	= $c07f 
+envbl		= $c05b		; vbl enable for the //c
 
 txtclr		= $c050		; select bitmap mode
 txtset		= $c051		; select text mode
@@ -81,6 +86,11 @@ entry		sei
 		sta txtclr
 		sta hires
 		sta mixset
+		
+; Enable the VBL on the //c
+		sta clrioudis
+		sta envbl
+		sta setioudis
 
 ; Initialise the logo movement routine
 		lda #$00
@@ -105,8 +115,8 @@ work_clear	lda #$20
 
 ; Main loop
 main_loop	lda rd_vbl_bar
-		bmi *-$03
-
+		bpl main_loop
+		lda ptrig
 
 ; Update the upper colour bars
 		lda sine_at_1
@@ -432,10 +442,6 @@ st_xb		stx scroll_timer
 ; Randomly toggle some of the character inversions
 		jsr random
 		jsr random
-
-; Wait for the start of the screen
-		lda rd_vbl_bar
-		bpl *-$03
 
 		jmp main_loop
 
